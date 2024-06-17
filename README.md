@@ -73,12 +73,12 @@ Descriptions of training parameters are as follows:
 - Refer to `train.py` for more details
 
 ## Testing
-`test.py` evalutes the performance.
+`test.py` evaluates the performance.
 
 To test the model, run following command:
 ```shell
-# Training example
-python train.py \
+# Testing example
+python test.py \
 --task 'STI' \
 --txt_dir 'enter_the_path' --txt_labeled_dir 'enter_the_path' \
 --keypoint_dir 'enter_the_path' --meta_dir 'enter_the_path' \
