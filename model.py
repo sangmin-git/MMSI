@@ -28,17 +28,22 @@ class PositionalEncoding(nn.Module):
 class MultimodalBaseline(nn.Module):
     def __init__(self, class_num, language_model):
         super(MultimodalBaseline, self).__init__()
-        
-        self.language_model=language_model
+
+        self.class_num = class_num
+        self.language_model = language_model
+
         if language_model == 'bert':
             from transformers import BertModel
             self.convers_encoder = BertModel.from_pretrained('bert-base-uncased')
-        if language_model == 'roberta':
+        elif language_model == 'roberta':
             from transformers import RobertaModel
             self.convers_encoder = RobertaModel.from_pretrained('roberta-base')
-        if language_model == 'electra':
+        elif language_model == 'electra':
             from transformers import ElectraModel
             self.convers_encoder = ElectraModel.from_pretrained('google/electra-base-discriminator')
+        else:
+            raise ValueError(f"Unsupported language model: {language_model}")
+
 
         self.convers_encoder2 = nn.Sequential(
             nn.Linear(768, 512))
@@ -113,7 +118,7 @@ class MultimodalBaseline(nn.Module):
         batch_size = speaker_labels.size(0)
         gaze_feature, gesture_feature = [], []
         for batch_i in range(batch_size):
-            gaze_feature.append(keypoint_seqs[batch_i:batch_i + 1, speaker_labels[batch_i], :, 0:3 * 2])
+            gaze_feature.append(keypoint_seqs[batch_i:batch_i + 1, speaker_labels[batch_i], :, 0:3*2])
             gesture_feature.append(keypoint_seqs[batch_i:batch_i + 1, speaker_labels[batch_i], :, 5*2:11*2])
 
         speaker_feature = torch.concat([torch.concat(gaze_feature, dim=0), torch.concat(gesture_feature, dim=0)], dim=-1)
@@ -122,7 +127,7 @@ class MultimodalBaseline(nn.Module):
         speaker_feature = self.speaker_encoder(speaker_feature).permute(1, 0, 2)
 
         # encode listener positions
-        speaker_onehot = torch.nn.functional.one_hot(speaker_labels, num_classes=6).float()
+        speaker_onehot = torch.nn.functional.one_hot(speaker_labels, num_classes = self.class_num).float()
         speaker_onehot_feature = self.onehot_encoder(speaker_onehot)
 
         position_feature = keypoint_seqs[:, :, 5, 0:2]
@@ -136,13 +141,14 @@ class MultimodalBaseline(nn.Module):
         vis_feature = self.visual_trans(vis_feature)
         vis_feature = self.positional_enc(vis_feature)
 
+        # fuse multimodal features
         if warmup: # visual warmup
-            vis_feature = torch.concat([cls_tokens, vis_feature], 0)
-            vis_feature = self.multi_trans_pre(vis_feature)
+            fused_feature = torch.concat([cls_tokens, vis_feature], 0)
+            fused_feature = self.multi_trans_pre(fused_feature)
         else:
-            vis_feature = torch.concat([cls_tokens, convers_feature, vis_feature], 0)
-            vis_feature = self.multi_trans(vis_feature)
+            fused_feature = torch.concat([cls_tokens, convers_feature, vis_feature], 0)
+            fused_feature = self.multi_trans(fused_feature)
 
-        logits = self.classifier(vis_feature[0, :, :])
+        logits = self.classifier(fused_feature[0, :, :])
 
         return logits
