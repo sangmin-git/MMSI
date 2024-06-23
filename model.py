@@ -44,11 +44,10 @@ class MultimodalBaseline(nn.Module):
         else:
             raise ValueError(f"Unsupported language model: {language_model}")
 
-
-        self.convers_encoder2 = nn.Sequential(
+        self.convers_fc = nn.Sequential(
             nn.Linear(768, 512))
 
-        self.fc_xy = nn.Sequential(
+        self.coordinate_fc = nn.Sequential(
             nn.Linear(2, 64),
             nn.ReLU(),
             nn.Linear(64, 64),
@@ -86,11 +85,11 @@ class MultimodalBaseline(nn.Module):
             nn.ReLU(),
             nn.Linear(512, 512))
 
-        self.position_encoder2 = nn.Sequential(
+        self.position_fc = nn.Sequential(
             nn.Linear(512, 512))
 
         self.onehot_encoder = nn.Sequential(
-            nn.Linear(6, 512))
+            nn.Linear(class_num, 512))
 
         visual_trans_layer = nn.TransformerEncoderLayer(d_model=512, nhead=8, dim_feedforward=1024)
         self.visual_trans = nn.TransformerEncoder(visual_trans_layer, num_layers=3)
@@ -112,7 +111,7 @@ class MultimodalBaseline(nn.Module):
         attention_mask = (language_token != pad_val).float()
         convers_festures = self.convers_encoder(language_token, attention_mask)[0]
         convers_feature = convers_festures[torch.arange(len(language_token)), mask_idxs]  # mask token feature
-        convers_feature = self.convers_encoder2(convers_feature).unsqueeze(0)
+        convers_feature = self.convers_fc(convers_feature).unsqueeze(0)
 
         # encode speaker non-verbal behaviors
         batch_size = speaker_labels.size(0)
@@ -123,7 +122,7 @@ class MultimodalBaseline(nn.Module):
 
         speaker_feature = torch.concat([torch.concat(gaze_feature, dim=0), torch.concat(gesture_feature, dim=0)], dim=-1)
         speaker_feature = speaker_feature.view(batch_size, 16, -1, 2)
-        speaker_feature = self.fc_xy(speaker_feature).view(batch_size, 16, -1)
+        speaker_feature = self.coordinate_fc(speaker_feature).view(batch_size, 16, -1)
         speaker_feature = self.speaker_encoder(speaker_feature).permute(1, 0, 2)
 
         # encode listener positions
@@ -131,9 +130,9 @@ class MultimodalBaseline(nn.Module):
         speaker_onehot_feature = self.onehot_encoder(speaker_onehot)
 
         position_feature = keypoint_seqs[:, :, 5, 0:2]
-        position_feature = self.fc_xy(position_feature).view(batch_size, -1)
+        position_feature = self.coordinate_fc(position_feature).view(batch_size, -1)
         position_feature = self.position_encoder(position_feature) + speaker_onehot_feature
-        position_feature = self.position_encoder2(position_feature).unsqueeze(0)
+        position_feature = self.position_fc(position_feature).unsqueeze(0)
 
         # encode visual interactions
         cls_tokens = self.cls_token.repeat(1, batch_size, 1)
