@@ -54,58 +54,6 @@ def get_tokenizer(language_model):
     else:
         raise ValueError(f"Unsupported language model: {language_model}")
 
-def main():
-    args = parse_args()
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-    os.makedirs(args.checkpoint_save_dir, exist_ok=True)
-
-    model = MultimodalBaseline(args.max_people_num, args.language_model).to(device)
-    
-    language_params = [p for n, p in model.named_parameters() if 'convers_encoder' in n]
-    other_params = [p for n, p in model.named_parameters() if 'convers_encoder' not in n]
-    optimizer = torch.optim.Adam([
-        {'params': other_params, 'lr': args.learning_rate * 10},
-        {'params': language_params, 'lr': args.learning_rate}
-    ])
-
-    tokenizer = get_tokenizer(args.language_model)
-    args.tokenizer = tokenizer
-
-    collate_fn_token = partial(collate_fn, tokenizer)
-    train_dataset = SocialDataset(args, is_training=True)
-    test_dataset = SocialDataset(args, is_training=False)
-
-    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=collate_fn_token, 
-                              shuffle=True, num_workers=args.workers, drop_last=True)
-    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, collate_fn=collate_fn_token, 
-                             shuffle=False, num_workers=args.workers, drop_last=False)
-
-    criterion = torch.nn.CrossEntropyLoss()
-    scaler = GradScaler()
-    
-    best_acc = 0
-    best_epoch = 0
-
-    for epoch in range(args.epochs):
-        train_loss = train_one_epoch(model, train_loader, optimizer, criterion, scaler, device, epoch, args)
-        test_acc = evaluate(model, test_loader, device, epoch, args)
-        
-        if test_acc > best_acc:
-            best_acc = test_acc
-            best_epoch = epoch
-            torch.save({
-                'model_name': args.model_name,
-                'model': model.state_dict(),
-            }, f"{args.checkpoint_save_dir}/model.pt")
-
-        print()
-        print(f"Epoch: {epoch+1}")
-        print(f"Train Loss: {train_loss:.3f}")
-        print(f"Test Accuracy: {test_acc:.3f}")
-        print(f"Test Accuracy (Best): {best_acc:.3f} / {best_epoch+1}e")
-        print(f"Model: {args.model_name}")
-
 def train_one_epoch(model, dataloader, optimizer, criterion, scaler, device, epoch, args):
     model.train()
     train_loss = AverageMeter()
@@ -143,6 +91,58 @@ def evaluate(model, dataloader, device, epoch, args):
             correct += (predicted == task_labels).sum().item()
 
     return correct / total
+
+def main():
+    args = parse_args()
+
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+    os.makedirs(args.checkpoint_save_dir, exist_ok=True)
+
+    model = MultimodalBaseline(args.max_people_num, args.language_model).to(device)
+
+    language_params = [p for n, p in model.named_parameters() if 'convers_encoder' in n]
+    other_params = [p for n, p in model.named_parameters() if 'convers_encoder' not in n]
+    optimizer = torch.optim.Adam([
+        {'params': other_params, 'lr': args.learning_rate * 10},
+        {'params': language_params, 'lr': args.learning_rate}
+    ])
+
+    tokenizer = get_tokenizer(args.language_model)
+    args.tokenizer = tokenizer
+
+    collate_fn_token = partial(collate_fn, tokenizer)
+    train_dataset = SocialDataset(args, is_training=True)
+    test_dataset = SocialDataset(args, is_training=False)
+
+    train_loader = DataLoader(train_dataset, batch_size=args.batch_size, collate_fn=collate_fn_token,
+                              shuffle=True, num_workers=args.workers, drop_last=True)
+    test_loader = DataLoader(test_dataset, batch_size=args.batch_size, collate_fn=collate_fn_token,
+                             shuffle=False, num_workers=args.workers, drop_last=False)
+
+    criterion = torch.nn.CrossEntropyLoss()
+    scaler = GradScaler()
+
+    best_acc = 0
+    best_epoch = 0
+
+    for epoch in range(args.epochs):
+        train_loss = train_one_epoch(model, train_loader, optimizer, criterion, scaler, device, epoch, args)
+        test_acc = evaluate(model, test_loader, device, epoch, args)
+
+        if test_acc > best_acc:
+            best_acc = test_acc
+            best_epoch = epoch
+            torch.save({
+                'model_name': args.model_name,
+                'model': model.state_dict(),
+            }, f"{args.checkpoint_save_dir}/model.pt")
+
+        print()
+        print(f"Epoch: {epoch + 1}")
+        print(f"Train Loss: {train_loss:.3f}")
+        print(f"Test Accuracy: {test_acc:.3f}")
+        print(f"Test Accuracy (Best): {best_acc:.3f} / {best_epoch + 1}e")
+        print(f"Model: {args.model_name}")
 
 if __name__ == '__main__':
     main()

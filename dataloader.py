@@ -179,22 +179,7 @@ class SocialDataset(Dataset):
 
         return convers_context
 
-    def __len__(self):
-        return len(self.data_points)
-
-    def __getitem__(self, idx):
-        convers_context, masked_i, keypoint_seq, player_num, speaker_label, task_label = self.data_points[idx]
-
-        if self.is_training:
-            convers_context, keypoint_seq, speaker_label, task_label = \
-                self.apply_data_augmentation(convers_context, keypoint_seq, player_num, speaker_label, task_label)
-
-        tokens = self.tokenize_conversation(convers_context, masked_i)
-        mask_idx = tokens.index(self.tokenizer.mask_token_id)
-
-        return tokens, mask_idx, keypoint_seq, speaker_label, task_label
-
-    def apply_data_augmentation(self, convers_context, keypoint_seq, player_num, speaker_label, task_label):
+    def apply_augmentation(self, convers_context, keypoint_seq, player_num, speaker_label, task_label):
         # Flip keypoint
         if np.random.random() < 0.5:
             keypoint_seq[:, :, ::2] = -1.0 * keypoint_seq[:, :, ::2]
@@ -239,5 +224,18 @@ class SocialDataset(Dataset):
 
         return [self.tokenizer.cls_token_id] + tokens
 
+    def __len__(self):
+        return len(self.data_points)
 
+    def __getitem__(self, idx):
+        convers_context, masked_i, keypoint_seq, player_num, speaker_label, task_label = self.data_points[idx]
+
+        if self.is_training:
+            convers_context, keypoint_seq, speaker_label, task_label = \
+                self.apply_augmentation(convers_context, keypoint_seq, player_num, speaker_label, task_label)
+
+        tokens = self.tokenize_conversation(convers_context, masked_i)
+        mask_idx = tokens.index(self.tokenizer.mask_token_id)
+
+        return tokens, mask_idx, keypoint_seq, speaker_label, task_label
 
