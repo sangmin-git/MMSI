@@ -22,7 +22,7 @@ This repository contains the official PyTorch implementation of the following pa
 
 ### Datasets
 - Download the benchmark datasets (YouTube, Ego4D) from [[link](https://www.dropbox.com/scl/fo/fbv6njzu1ynbgv9wgtrwo/ANPk2TKqK2rl44MqKu05ogk?rlkey=yx7bmzmmiymauvz99q2rvjajg&st=305631zj&dl=0)]
-- For access to the original datasets including videos, visit [[link](https://persuasion-deductiongame.socialai-data.org/)].
+- For access to the original base datasets including videos, visit [[link](https://persuasion-deductiongame.socialai-data.org/)].
 - You can download the aligned player keypoint samples from [[link](https://www.dropbox.com/scl/fo/01rp8c126kc9014kbhvkg/AO2JvbsFuMd4WkkwzzOR06U?rlkey=910f1sf90zm6piii0krepikzi&st=u36zodh8&dl=0)]
 
 ## Training
@@ -103,12 +103,23 @@ You can download the pretrained models.
 | Ego4D | Speaking Target Identification <br> Pronoun Coreference Resolution <br> Mentioned Player Prediction |  [Baseline-BERT](https://www.dropbox.com/scl/fi/m5z47d2ul2qfw64d99axj/ego4d_STI_bert.pt?rlkey=3qcnt3qn6vqqvjbj308g7zv7q&st=lit7e8vr&dl=0) / [Baseline-RoBERTa](https://www.dropbox.com/scl/fi/b4zhhi1rpyv0mulbpb52t/ego4d_STI_roberta.pt?rlkey=v4yxjcip9e6ccper27c8jv722&st=3bjs025z&dl=0) / [Baseline-ELECTRA](https://www.dropbox.com/scl/fi/cugovcxza6opgh0r8qz08/ego4d_STI_electra.pt?rlkey=r20xl2m4rxzt4oenzriodzoid&st=vhb1t42n&dl=0) <br> [Baseline-BERT](https://www.dropbox.com/scl/fi/qz7zw36vcoyodxpz37ebt/ego4d_PCR_bert.pt?rlkey=99uwcw723h5mrqrq58t0wvbv3&st=vethstrn&dl=0) / [Baseline-RoBERTa](https://www.dropbox.com/scl/fi/z9iy01u06udnpmy1nq5ms/ego4d_PCR_roberta.pt?rlkey=9eca48nlcfanys2sf3huy00k9&st=yokuyora&dl=0) / [Baseline-ELECTRA](https://www.dropbox.com/scl/fi/ut7rkbsowtbtww7811pjx/ego4d_PCR_electra.pt?rlkey=sb3t1tzdggpj17hogcpf3xzkw&st=9ci33t26&dl=0) <br> [Baseline-BERT](https://www.dropbox.com/scl/fi/i0n8aex8e2vkwat8u042r/ego4d_MPP_bert.pt?rlkey=brli1m1b1ysr7u2glbsrtlj3b&st=em8izwtg&dl=0) / [Baseline-RoBERTa](https://www.dropbox.com/scl/fi/taxtyxv07y7nic4fpr830/ego4d_MPP_roberta.pt?rlkey=cu9ag07ilmcd1dw71oehzbwvc&st=wo3mdhg9&dl=0) / [Baseline-ELECTRA](https://www.dropbox.com/scl/fi/56bjzmlgrlf4u1v701gea/ego4d_MPP_electra.pt?rlkey=2tfkqf5ns516f7nn4lupo9z75&st=gerpduo9&dl=0) |
 
 ## Citation
-If you find this work useful in your research, please cite the paper:
+If you find this work useful in your research, please cite our paper:
 ```
 @inproceedings{lee2024modeling,
   title={Modeling Multimodal Social Interactions: New Challenges and Baselines with Densely Aligned Representations},
   author={Lee, Sangmin and Lai, Bolin and Ryan, Fiona and Boote, Bikram and Rehg, James M},
   booktitle={Proceedings of the IEEE/CVF Conference on Computer Vision and Pattern Recognition},
   year={2024}
+}
+```
+If you use or reference the base datasets, please also cite the following paper:
+```
+@inproceedings{lai2023werewolf,
+  title={Werewolf Among Us: Multimodal Resources for Modeling Persuasion Behaviors in Social Deduction Games},
+  author={Lai, Bolin and Zhang, Hongxin and Liu, Miao and Pariani, Aryan and Ryan, Fiona and Jia, Wenqi
+          and Hayati, Shirley Anugrah and Rehg, James and Yang, Diyi},
+  booktitle={Findings of the Association for Computational Linguistics},
+  pages={6570--6588},
+  year={2023}
 }
 ```
